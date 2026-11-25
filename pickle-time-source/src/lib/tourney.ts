@@ -395,9 +395,15 @@ export function teamRoster<P extends Pick<Player, "id" | "teamId" | "slot">>(tea
 
 const nameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
-/** Alphabetical, with numbers in natural order ("Player 2" before "Player 10"). */
+/** Default roster names ("Player 7"), or a pair made only of them ("Player 2 & Player 3"). */
+export function isPlaceholderName(name: string): boolean {
+  const parts = name.split("&").map((s) => s.trim());
+  return parts.every((s) => s === "" || /^player\s*\d*$/i.test(s));
+}
+
+/** Alphabetical, with numbers in natural order ("Player 2" before "Player 10"). Placeholder names sort after real ones. */
 export function compareNames(a: string, b: string): number {
-  return nameCollator.compare(a.trim(), b.trim());
+  return Number(isPlaceholderName(a)) - Number(isPlaceholderName(b)) || nameCollator.compare(a.trim(), b.trim());
 }
 
 /** The pair's next games that haven't been played yet, soonest first. */
