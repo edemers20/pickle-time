@@ -4,7 +4,7 @@ import { PageHeader, WithState } from "@/components/bits";
 import { useViewingTeam } from "@/components/my-team";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MARGIN_CAP, overallStandings, POOLS, type OverallRow, type TourneyState } from "@/lib/tourney";
+import { MARGIN_CAP, overallStandings, POOLS, teamLabel, type OverallRow, type TourneyState } from "@/lib/tourney";
 import { cn } from "@/lib/utils";
 
 export default function StandingsPage() {
@@ -52,7 +52,7 @@ function Standings({ state }: { state: TourneyState }) {
                     data-testid={`overall-row-${r.place}`}
                   >
                     <TableCell className="pl-4 font-display text-lg font-bold tabular-nums">{r.place}</TableCell>
-                    <TableCell className="max-w-[12rem] font-medium">{r.team.name}</TableCell>
+                    <TableCell className="max-w-[12rem] font-medium whitespace-normal leading-tight">{teamLabel(r.team, state)}</TableCell>
                     <TableCell className="text-right font-semibold tabular-nums">
                       {r.wins}-{r.losses}
                     </TableCell>
@@ -84,7 +84,7 @@ function Standings({ state }: { state: TourneyState }) {
                     <TableBody>
                       {poolRows.map((r) => (
                         <TableRow key={r.team.id} className={cn(myTeam === r.team.id && "bg-primary/10")}>
-                          <TableCell className="max-w-[11rem] pl-3 font-medium">{r.team.name}</TableCell>
+                          <TableCell className="max-w-[11rem] pl-3 font-medium whitespace-normal leading-tight">{teamLabel(r.team, state)}</TableCell>
                           <TableCell className="text-right font-semibold tabular-nums">
                             {r.wins}-{r.losses}
                           </TableCell>

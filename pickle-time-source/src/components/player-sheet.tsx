@@ -4,7 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { PlayerEditForm } from "@/app/players/[id]/edit/editor";
 import { EmptyState, PlayerAvatar, WithState } from "@/components/bits";
-import { OpenPlayerContext } from "@/components/open-player";
+import { OpenPlayerContext, useOpenPlayer } from "@/components/open-player";
+import { PlayerTeamPanel } from "@/components/player-team";
 import { PopupSheet } from "@/components/popup-sheet";
 import { usePlayerSession } from "@/components/player-session";
 import { Button } from "@/components/ui/button";
@@ -40,8 +41,9 @@ function OpenPlayerFromQuery({ onOpen }: { onOpen: (id: number) => void }) {
   return null;
 }
 
-export function PlayerSheet({ id, onClose }: { id: number | null; onClose?: () => void }) {
+export function PlayerSheet({ id, onClose, onOpenPlayer }: { id: number | null; onClose?: () => void; onOpenPlayer?: (id: number) => void }) {
   const router = useRouter();
+  const openFromProvider = useOpenPlayer();
   const close = useCallback(() => {
     if (onClose) onClose();
     else if (window.history.length > 1) router.back();
@@ -72,7 +74,7 @@ export function PlayerSheet({ id, onClose }: { id: number | null; onClose?: () =
             </PopupSheet>
           );
         }
-        return <Sheet state={state} player={player} open={id !== null} onClose={close} />;
+        return <Sheet state={state} player={player} open={id !== null} onClose={close} onOpenPlayer={onOpenPlayer ?? openFromProvider} />;
       }}
     </WithState>
   );
@@ -83,11 +85,13 @@ function Sheet({
   player,
   open,
   onClose,
+  onOpenPlayer,
 }: {
   state: TourneyState;
   player: Player;
   open: boolean;
   onClose: () => void;
+  onOpenPlayer: (id: number) => void;
 }) {
   const { isAdmin } = usePlayerSession();
   const team = state.teams.find((t) => t.id === player.teamId);
@@ -168,6 +172,10 @@ function Sheet({
               <p className="mt-2 text-muted-foreground">No stats yet.</p>
             )}
           </section>
+
+          <div className="mt-4 space-y-4 empty:hidden">
+            <PlayerTeamPanel state={state} player={player} onOpenPlayer={onOpenPlayer} />
+          </div>
         </>
       )}
     </PopupSheet>

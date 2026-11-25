@@ -9,7 +9,7 @@ import { usePlayerSession } from "@/components/player-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { TourneyState } from "@/lib/tourney";
+import { compareNames, type TourneyState } from "@/lib/tourney";
 import { cn } from "@/lib/utils";
 
 export default function LoginPage() {
@@ -29,7 +29,7 @@ function LoginForm({ state }: { state: TourneyState }) {
     () =>
       state.players
         .filter((p) => p.name.trim() && (!needle || p.name.toLowerCase().includes(needle) || p.nickname.toLowerCase().includes(needle)))
-        .sort((a, b) => a.name.localeCompare(b.name)),
+        .sort((a, b) => compareNames(a.name, b.name)),
     [state.players, needle],
   );
   const selectedPlayer = state.players.find((p) => p.id === selected);

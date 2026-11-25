@@ -5,6 +5,8 @@ import { useCallback, useState } from "react";
 import { PlayerAvatar } from "@/components/bits";
 import { PopupSheet } from "@/components/popup-sheet";
 import { ProfileForm } from "@/components/profile-form";
+import { PlayerTeamPanel } from "@/components/player-team";
+import { useOpenPlayer } from "@/components/open-player";
 import { usePlayerSession } from "@/components/player-session";
 import { useTourney } from "@/components/tourney-provider";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,7 @@ import { type TourneyState } from "@/lib/tourney";
 export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { playerId, isAdmin } = usePlayerSession();
   const { state } = useTourney();
+  const openPlayer = useOpenPlayer();
   const [editing, setEditing] = useState(false);
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
@@ -34,7 +37,10 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
       testId="profile-sheet"
       backTestId="profile-sheet-back"
     >
-      <ProfileBody state={state} playerId={playerId} isAdmin={isAdmin} editing={editing} onEditing={setEditing} />
+      <ProfileBody state={state} playerId={playerId} isAdmin={isAdmin} editing={editing} onEditing={setEditing} onOpenPlayer={(id) => {
+        onClose();
+        openPlayer(id);
+      }} />
     </PopupSheet>
   );
 }
@@ -45,12 +51,14 @@ function ProfileBody({
   isAdmin,
   editing,
   onEditing,
+  onOpenPlayer,
 }: {
   state: TourneyState;
   playerId: number;
   isAdmin: boolean;
   editing: boolean;
   onEditing: (editing: boolean) => void;
+  onOpenPlayer: (id: number) => void;
 }) {
   const player = state.players.find((p) => p.id === playerId);
   if (!player) return null;
@@ -130,6 +138,8 @@ function ProfileBody({
               <p className="mt-2 text-sm text-muted-foreground">No stats yet.</p>
             )}
           </div>
+
+          <PlayerTeamPanel state={state} player={player} onOpenPlayer={onOpenPlayer} />
         </div>
       )}
     </section>
