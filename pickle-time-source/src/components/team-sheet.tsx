@@ -6,7 +6,7 @@ import { useOpenPlayer } from "@/components/open-player";
 import { OpenTeamContext } from "@/components/open-team";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTourney } from "@/components/tourney-provider";
-import { teamDisplayName, teamRecord } from "@/lib/tourney";
+import { teamLabel, teamRecord } from "@/lib/tourney";
 
 export function TeamSheetProvider({ children }: { children: React.ReactNode }) {
   const [teamId, setTeamId] = useState<number | null>(null);
@@ -24,7 +24,7 @@ function TeamSummary({ teamId, onClose }: { teamId: number | null; onClose: () =
   const team = teamId !== null ? state?.teams.find((t) => t.id === teamId) : undefined;
   const players = team && state ? state.players.filter((p) => p.teamId === team.id).sort((a, b) => a.slot - b.slot || a.id - b.id) : [];
   const record = team && state ? teamRecord(team.id, state.matches) : null;
-  const title = team && state ? teamDisplayName(team, state.players) : "Team";
+  const title = team && state ? teamLabel(team, state) : "Team";
 
   return (
     <Dialog open={teamId !== null && !!team} onOpenChange={(open) => !open && onClose()}>

@@ -74,7 +74,7 @@ Write endpoints (`/api/admin`, `/api/admin/session`, `/api/players/[id]`) reject
 
 - **Scores:** pick a round, tap + and − or type scores, then **Mark live**, **Final** or **Reset**. Live is allowed only once earlier games have final scores. Ties can't be marked final.
 - **Playoffs:** **Generate seeding from standings** fills the quarterfinals with seeds 3 to 6 and places seeds 1 and 2 in the semis. Quarterfinal winners fill in when those games are marked final, and reverting a result pulls the winner back out. A same-group quarterfinal is flagged, with a one-click swap of seeds 5 and 6. Any slot can still be overridden, and ad-hoc matches can be created on any court and time.
-- **Pairing:** three cards across. Swap a name to trade places.
+- **Pairing:** three cards across. Swap a name to trade places. **Finalize & show teams** makes the pairs public. Standings, the bracket and every matchup switch from "Team N" to "Name 1 & Name 2". The Now and Schedule tabs list real games, profiles show the teammate and upcoming games, and the Players tab groups people into their pairs. **Hide teams** undoes it. Until then the Players tab is the alphabetical free agent pool.
 - **Teams & players:** rename teams, change their colors, rename players.
 - **Settings:** event name, tagline, date, first-serve time (all times are computed from it), location, sample-roster badge.
 

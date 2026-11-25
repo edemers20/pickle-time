@@ -3,7 +3,7 @@
 import { Trophy } from "lucide-react";
 import { MatchCard, PageHeader, WithState } from "@/components/bits";
 import { useViewingTeam } from "@/components/my-team";
-import { CODES, teamDisplayName, winnerOf, type TourneyState } from "@/lib/tourney";
+import { CODES, teamLabel, winnerOf, type TourneyState } from "@/lib/tourney";
 import { cn } from "@/lib/utils";
 
 type Col = { title: string; codes: string[] };
@@ -62,7 +62,7 @@ function BracketTree({ state }: { state: TourneyState }) {
                               {ci > 0 && <span className="absolute top-1/2 -left-4 h-px w-4 bg-border" />}
                               {next && <span className="absolute top-1/2 -right-4 h-px w-4 bg-border" />}
                               <p className="mb-1 text-[11px] text-muted-foreground">{m?.label ?? code}</p>
-                              {m ? <MatchCard match={{ ...m, teamA: null, teamB: null }} state={state} myTeam={myTeam} stacked /> : null}
+                              {m ? <MatchCard match={state.settings.teamsRevealed ? m : { ...m, teamA: null, teamB: null }} state={state} myTeam={myTeam} stacked /> : null}
                             </div>
                           );
                         })}
@@ -82,7 +82,7 @@ function BracketTree({ state }: { state: TourneyState }) {
                   )}
                 >
                   <Trophy className={cn("size-5 shrink-0", champ ? "text-amber-300" : "")} />
-                  <span className="truncate font-display text-lg font-bold uppercase">{champ ? teamDisplayName(champ, state.players) : "TBD"}</span>
+                  <span className="truncate font-display text-lg font-bold uppercase">{champ ? teamLabel(champ, state) : "TBD"}</span>
                 </div>
               </div>
             </div>

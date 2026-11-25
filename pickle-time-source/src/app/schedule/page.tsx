@@ -2,9 +2,21 @@
 
 import { useState } from "react";
 import { Coffee, Medal, Timer } from "lucide-react";
-import { EmptyState, PageHeader, WithState } from "@/components/bits";
+import { EmptyState, MatchCard, PageHeader, WithState } from "@/components/bits";
+import { useViewingTeam } from "@/components/my-team";
 import { SlidingTabPanel } from "@/components/sliding-tab-panel";
-import { clockRange, TIMES, type TourneyState } from "@/lib/tourney";
+import {
+  clockRange,
+  clockTime,
+  isDone,
+  POOL_ROUNDS,
+  ROUND_FINAL,
+  ROUND_QF,
+  ROUND_SEMIS,
+  roundLabel,
+  TIMES,
+  type TourneyState,
+} from "@/lib/tourney";
 import { cn } from "@/lib/utils";
 
 type View = "upcoming" | "past" | "all";
@@ -52,7 +64,9 @@ function Schedule({ state }: { state: TourneyState }) {
 
       <SlidingTabPanel value={view} order={VIEWS}>
         {(active) =>
-          active === "past" ? (
+          state.settings.teamsRevealed ? (
+            <Matchups state={state} view={active} notes={{ checkIn, intermission, awards }} />
+          ) : active === "past" ? (
             <EmptyState title="Nothing has happened yet" />
           ) : (
             <div className="space-y-6">
@@ -67,6 +81,66 @@ function Schedule({ state }: { state: TourneyState }) {
           )
         }
       </SlidingTabPanel>
+    </div>
+  );
+}
+
+const STAGES: { title: string; has: (round: number) => boolean }[] = [
+  { title: "Group Stage", has: (r) => r <= POOL_ROUNDS },
+  { title: "Quarterfinals", has: (r) => r === ROUND_QF },
+  { title: "Semifinals", has: (r) => r === ROUND_SEMIS },
+  { title: "Championship Final", has: (r) => r === ROUND_FINAL },
+  { title: "Bonus matches", has: (r) => r > ROUND_FINAL },
+];
+
+function Matchups({
+  state,
+  view,
+  notes,
+}: {
+  state: TourneyState;
+  view: View;
+  notes: { checkIn: string; intermission: string; awards: string };
+}) {
+  const myTeam = useViewingTeam();
+  const shown = state.matches.filter((m) => (view === "past" ? isDone(m) : view === "upcoming" ? !isDone(m) : true));
+  if (view === "past" && !shown.length) return <EmptyState title="Nothing has happened yet" />;
+  const rounds = [...new Set(shown.map((m) => m.round))].sort((a, b) => a - b);
+  const withNotes = view !== "past";
+
+  const stage = (title: string, has: (round: number) => boolean) => {
+    const stageRounds = rounds.filter(has);
+    if (!stageRounds.length) return null;
+    return (
+      <section key={title} className="space-y-4">
+        <StageHeading title={title} />
+        {stageRounds.map((round) => {
+          const games = shown.filter((m) => m.round === round).sort((a, b) => a.startMin - b.startMin || a.court - b.court || a.id - b.id);
+          return (
+            <div key={round} data-testid={`schedule-round-${round}`}>
+              <p className="mb-2 text-sm font-semibold">
+                {roundLabel(round)} <span className="font-normal text-muted-foreground">{clockTime(state.settings.startTime, games[0].startMin)}</span>
+              </p>
+              <div className="grid gap-2 sm:grid-cols-3">
+                {games.map((m) => (
+                  <MatchCard key={m.id} match={m} state={state} myTeam={myTeam} header="court" />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {withNotes && <TimeNote icon={<Timer className="size-4" />} range={notes.checkIn} label="check-in and warm-up" testId="checkin-note" timeTestId="checkin-time" />}
+      {stage(STAGES[0].title, STAGES[0].has)}
+      {withNotes && <TimeNote icon={<Coffee className="size-4" />} range={notes.intermission} label="break" testId="break-note" timeTestId="break-time" />}
+      {STAGES.slice(1, 4).map((s) => stage(s.title, s.has))}
+      {withNotes && <TimeNote icon={<Medal className="size-4" />} range={notes.awards} label="awards and open courts" testId="awards-note" timeTestId="awards-time" />}
+      {stage(STAGES[4].title, STAGES[4].has)}
     </div>
   );
 }

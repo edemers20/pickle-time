@@ -9,7 +9,7 @@ import { useOpenTeam } from "@/components/open-team";
 import {
   describeSource,
   initials,
-  teamDisplayName,
+  teamLabel,
   type Match,
   type Player,
   type Team,
@@ -33,7 +33,7 @@ export function TeamName({
 }) {
   const { state } = useTourney();
   const openTeam = useOpenTeam();
-  const label = state ? teamDisplayName(team, state.players) : team.name;
+  const label = state ? teamLabel(team, state) : team.name;
   const inner = (
     <span className={cn(dot ? "inline-flex min-w-0 items-center gap-2" : "inline", className)}>
       {dot ? <TeamDot color={team.color} /> : null}
@@ -158,7 +158,8 @@ function MatchSide({
       </span>
     );
   }
-  const label = score === null ? teamDisplayName(team, state.players) : `${teamDisplayName(team, state.players)} (${score})`;
+  const name = teamLabel(team, state);
+  const label = score === null ? name : `${name} (${score})`;
   const background = lost ? "#64748b" : team.color;
   return (
     <button

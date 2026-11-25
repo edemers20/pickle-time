@@ -9,6 +9,8 @@ export type Settings = {
   startTime: string;
   location: string;
   sampleData: boolean;
+  /** Set from the desk once pairs are final. Until then spectators see "Team N" and no matchups. */
+  teamsRevealed: boolean;
 };
 
 export type Team = {
@@ -374,12 +376,35 @@ export function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? "";
 }
 
-/** Spectator label: both players' first names, once the pair is filled in. Until then, the team name. */
+/** Pair label: both players' names, once the pair is filled in. Until then, the team name. */
 export function teamDisplayName(team: Pick<Team, "id" | "name">, players: Pick<Player, "id" | "teamId" | "slot" | "name">[]): string {
-  const side = players.filter((p) => p.teamId === team.id).sort((a, b) => a.slot - b.slot || a.id - b.id);
-  const names = side.map((p) => firstName(p.name)).filter(Boolean);
+  const side = teamRoster(team.id, players);
+  const names = side.map((p) => p.name.trim()).filter(Boolean);
   if (side.length >= 2 && names.length === side.length) return `${names[0]} & ${names[1]}`;
   return team.name;
+}
+
+/** Public label: the pair's names once the desk has finalized teams, "Team N" before that. */
+export function teamLabel(team: Pick<Team, "id" | "name">, state: Pick<TourneyState, "players" | "settings">): string {
+  return state.settings.teamsRevealed ? teamDisplayName(team, state.players) : team.name;
+}
+
+export function teamRoster<P extends Pick<Player, "id" | "teamId" | "slot">>(teamId: number, players: P[]): P[] {
+  return players.filter((p) => p.teamId === teamId).sort((a, b) => a.slot - b.slot || a.id - b.id);
+}
+
+const nameCollator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+
+/** Alphabetical, with numbers in natural order ("Player 2" before "Player 10"). */
+export function compareNames(a: string, b: string): number {
+  return nameCollator.compare(a.trim(), b.trim());
+}
+
+/** The pair's next games that haven't been played yet, soonest first. */
+export function upcomingForTeam(teamId: number, matches: Match[]): Match[] {
+  return matches
+    .filter((m) => (m.teamA === teamId || m.teamB === teamId) && !isDone(m))
+    .sort((a, b) => a.startMin - b.startMin || a.court - b.court || a.id - b.id);
 }
 
 const MONTH_INDEX: Record<string, number> = {

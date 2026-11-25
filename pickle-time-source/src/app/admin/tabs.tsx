@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Loader2, Minus, Plus, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { CheckCircle2, Loader2, Minus, Plus, Sparkles, Trash2, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge, TeamDot } from "@/components/bits";
 import { TeamSelect } from "@/components/my-team";
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   clockTime,
+  compareNames,
   computeSeeds,
   currentRound,
   describeSource,
@@ -442,10 +443,11 @@ function AdhocCreator({ state }: { state: TourneyState }) {
 export function PairingTab({ state }: { state: TourneyState }) {
   const { run, busy } = useRun();
   const teams = [...state.teams].sort((a, b) => a.pool.localeCompare(b.pool) || a.poolPos - b.poolPos);
-  const players = [...state.players].sort((a, b) => a.name.localeCompare(b.name));
+  const players = [...state.players].sort((a, b) => compareNames(a.name, b.name));
 
   return (
     <div className="space-y-3" data-testid="pairing">
+      <FinalizeTeams state={state} />
       <p className="text-sm text-muted-foreground">Pick who plays together. Swapping a name trades their spot with the person you choose.</p>
       <div className="grid grid-cols-3 gap-2">
       {teams.map((team) => {
@@ -481,6 +483,59 @@ export function PairingTab({ state }: { state: TourneyState }) {
       })}
       </div>
     </div>
+  );
+}
+
+function FinalizeTeams({ state }: { state: TourneyState }) {
+  const { run, busy } = useRun();
+  const revealed = state.settings.teamsRevealed;
+
+  if (revealed) {
+    return (
+      <Card size="sm" className="gap-2 bg-primary/10" data-testid="teams-finalized">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 px-3">
+          <p className="flex items-center gap-2 text-sm">
+            <CheckCircle2 className="size-4 shrink-0 text-primary" />
+            Teams are live. Everyone sees pair names, matchups and their games.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            data-testid="hide-teams"
+            onClick={() => {
+              if (window.confirm("Hide teams again? The site goes back to Team 1, Team 2… and hides matchups.")) {
+                void run({ action: "setTeamsRevealed", revealed: false }, "Teams hidden");
+              }
+            }}
+          >
+            Hide teams
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card size="sm" className="gap-2" data-testid="finalize-teams-card">
+      <CardContent className="space-y-2 px-3">
+        <p className="text-sm">
+          When pairs are set, show them on the site. Standings and matchups switch to player names, and profiles show each person&apos;s teammate and
+          games.
+        </p>
+        <Button
+          disabled={busy}
+          data-testid="finalize-teams"
+          onClick={() => {
+            if (window.confirm("Teams and pairs are final? This shows every pair's names and matchups to everyone.")) {
+              void run({ action: "setTeamsRevealed", revealed: true }, "Teams are live");
+            }
+          }}
+        >
+          {busy ? <Loader2 className="animate-spin" /> : <Users />} Finalize &amp; show teams
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

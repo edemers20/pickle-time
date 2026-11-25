@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Trophy } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { EmptyState, WithState } from "@/components/bits";
+import { EmptyState, MatchCard, StatusBadge, WithState } from "@/components/bits";
+import { useViewingTeam } from "@/components/my-team";
 import { SlidingTabPanel } from "@/components/sliding-tab-panel";
 import { cn } from "@/lib/utils";
-import { CODES, COURTS, teamDisplayName, winnerOf, type TourneyState } from "@/lib/tourney";
+import { clockTime, CODES, COURTS, displayStatus, isDone, roundLabel, teamLabel, winnerOf, type Match, type TourneyState } from "@/lib/tourney";
 
 export default function HomePage() {
   return <WithState>{(state) => <Home state={state} />}</WithState>;
@@ -20,12 +21,12 @@ function Home({ state }: { state: TourneyState }) {
 
   return (
     <div className="space-y-8">
-      {champion && (
+      {champion && state.settings.teamsRevealed && (
         <Card className="flex-row items-center gap-4 bg-gradient-to-r from-amber-400/25 to-transparent px-5">
           <Trophy className="size-10 text-amber-300" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-amber-300">Champions</p>
-            <p className="font-display text-3xl font-bold uppercase">{teamDisplayName(champion, state.players)}</p>
+            <p className="font-display text-3xl font-bold uppercase">{teamLabel(champion, state)}</p>
           </div>
         </Card>
       )}
@@ -60,10 +61,52 @@ function Home({ state }: { state: TourneyState }) {
             })}
           </div>
           <SlidingTabPanel value={court} order={COURTS}>
-            {() => <EmptyState className="flex h-28 items-center justify-center overflow-hidden p-4" title="Games will start soon" />}
+            {(c) =>
+              state.settings.teamsRevealed ? (
+                <CourtGames state={state} court={c} />
+              ) : (
+                <EmptyState className="flex h-28 items-center justify-center overflow-hidden p-4" title="Games will start soon" />
+              )
+            }
           </SlidingTabPanel>
         </div>
       </section>
+    </div>
+  );
+}
+
+function CourtGames({ state, court }: { state: TourneyState; court: number }) {
+  const myTeam = useViewingTeam();
+  const games = state.matches
+    .filter((m) => m.court === court && !isDone(m))
+    .sort((a, b) => a.startMin - b.startMin || a.id - b.id)
+    .slice(0, 2);
+  if (!games.length) {
+    return <EmptyState className="flex h-28 items-center justify-center overflow-hidden p-4" title="No more games on this court" />;
+  }
+  return (
+    <div className="space-y-4" data-testid={`court-games-${court}`}>
+      {games.map((m, i) => (
+        <CourtGame key={m.id} state={state} match={m} heading={i === 0 ? "now" : "next"} myTeam={myTeam} />
+      ))}
+    </div>
+  );
+}
+
+function CourtGame({ state, match, heading, myTeam }: { state: TourneyState; match: Match; heading: "now" | "next"; myTeam: number | null }) {
+  const status = displayStatus(match, state.matches);
+  const time = clockTime(state.settings.startTime, match.startMin);
+  const title = heading === "now" ? (status === "live" ? "Now playing" : "Up next") : "After that";
+  return (
+    <div data-testid={`court-game-${heading}`}>
+      <div className="mb-2 flex items-center justify-between gap-2 text-sm">
+        <span className="font-semibold">{title}</span>
+        <span className="flex items-center gap-2 text-muted-foreground">
+          {roundLabel(match.round)}, {time}
+          {status === "live" && <StatusBadge status={status} />}
+        </span>
+      </div>
+      <MatchCard match={match} state={state} myTeam={myTeam} className={cn(heading === "next" && "opacity-80")} />
     </div>
   );
 }

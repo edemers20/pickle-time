@@ -9,6 +9,7 @@ type SettingsRow = {
   start_time: string;
   location: string;
   sample_data: boolean;
+  teams_revealed: boolean;
   version: string | number;
   updated_at: Date | string;
 };
@@ -83,7 +84,7 @@ export async function getVersion(): Promise<number> {
 export async function getState(): Promise<TourneyState> {
   const [settingsRows, teamRows, playerRows, matchRows] = await Promise.all([
     sql<SettingsRow>(
-      "select event_name, tagline, event_date, start_time, location, sample_data, version, updated_at from settings where id = 1",
+      "select event_name, tagline, event_date, start_time, location, sample_data, teams_revealed, version, updated_at from settings where id = 1",
     ),
     sql<TeamRow>("select id, name, pool, pool_pos, color, seed from teams order by pool, pool_pos"),
     sql<PlayerRow>(
@@ -99,6 +100,7 @@ export async function getState(): Promise<TourneyState> {
     startTime: s.start_time,
     location: s.location,
     sampleData: s.sample_data,
+    teamsRevealed: s.teams_revealed === true,
   };
   const players: Player[] = playerRows.map((r) => ({
     id: r.id,

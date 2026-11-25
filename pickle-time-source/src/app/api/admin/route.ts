@@ -224,6 +224,18 @@ export async function POST(req: Request) {
           extra = { token };
           break;
         }
+        case "setTeamsRevealed": {
+          const revealed = body.revealed === true;
+          if (revealed) {
+            const short = await q<{ name: string }>(
+              `select t.name from teams t left join players p on p.team_id = t.id and btrim(p.name) <> ''
+               group by t.id, t.name having count(p.id) < 2 order by t.pool, t.pool_pos`,
+            );
+            if (short.length) throw new HttpError(400, `Every team needs two named players first. Missing: ${short.map((r) => r.name).join(", ")}`);
+          }
+          await q("update settings set teams_revealed = $1 where id = 1", [revealed]);
+          break;
+        }
         case "updateSettings":
           await q(
             `update settings set event_name = $1, tagline = $2, event_date = $3, start_time = $4, location = $5, sample_data = $6 where id = 1`,
