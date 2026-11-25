@@ -5,7 +5,7 @@ import { Shield } from "lucide-react";
 import { LoadingState, PageHeader, WithState } from "@/components/bits";
 import { usePlayerSession } from "@/components/player-session";
 import { Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger } from "@/components/ui/tabs";
-import { PairingTab, PlayoffsTab, ScoresTab, SettingsTab, TeamsTab } from "./tabs";
+import { PairingTab, PlayersTab, PlayoffsTab, ScoresTab, SettingsTab } from "./tabs";
 
 export default function AdminPage() {
   const { playerId, isAdmin, ready } = usePlayerSession();
@@ -43,7 +43,7 @@ export default function AdminPage() {
                 <TabsTrigger value="scores">Scores</TabsTrigger>
                 <TabsTrigger value="pairing">Pairing</TabsTrigger>
                 <TabsTrigger value="playoffs">Playoffs</TabsTrigger>
-                <TabsTrigger value="teams">Teams &amp; players</TabsTrigger>
+                <TabsTrigger value="players">Players</TabsTrigger>
                 <TabsTrigger value="settings">Settings</TabsTrigger>
               </TabsList>
             </div>
@@ -57,8 +57,8 @@ export default function AdminPage() {
               <TabsContent value="playoffs" className="pt-4">
                 <PlayoffsTab state={state} />
               </TabsContent>
-              <TabsContent value="teams" className="pt-4">
-                <TeamsTab state={state} />
+              <TabsContent value="players" className="pt-4">
+                <PlayersTab state={state} />
               </TabsContent>
               <TabsContent value="settings" className="pt-4">
                 <SettingsTab state={state} />

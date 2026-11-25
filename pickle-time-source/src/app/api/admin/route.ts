@@ -122,6 +122,33 @@ async function swapPlayers(q: Query, body: Record<string, unknown>) {
   await q("update players set team_id = $1, slot = $2, updated_at = now() where id = $3", [left.team_id, left.slot, b]);
 }
 
+/**
+ * Moves pair `a` into team `b`'s court slot and vice versa. Pool games are bound to the slot (team id),
+ * so players, name, color and seed trade places while pool, position and pool games stay put.
+ * Playoff and ad-hoc games follow the pair.
+ */
+async function swapTeams(q: Query, body: Record<string, unknown>) {
+  const a = int(body.a, "Team", 1, 1_000_000);
+  const b = int(body.b, "Team", 1, 1_000_000);
+  if (a === b) throw new HttpError(400, "Pick two different teams");
+  const rows = await q<{ id: number }>("select id from teams where id in ($1, $2)", [a, b]);
+  if (rows.length !== 2) throw new HttpError(404, "Team not found");
+  const started = await q<{ id: number }>(
+    "select id from matches where (team_a in ($1, $2) or team_b in ($1, $2)) and status <> 'scheduled' limit 1",
+    [a, b],
+  );
+  if (started[0]) throw new HttpError(400, "One of these teams has already started a game. Reset its scores first.");
+  await q("update players set team_id = case when team_id = $1 then $2 else $1 end, updated_at = now() where team_id in ($1, $2)", [a, b]);
+  await q(
+    `update teams t set name = o.name, color = o.color, seed = o.seed
+       from teams o where t.id in ($1, $2) and o.id = case when t.id = $1 then $2 else $1 end`,
+    [a, b],
+  );
+  for (const col of ["team_a", "team_b"]) {
+    await q(`update matches set ${col} = case when ${col} = $1 then $2 else $1 end where phase <> 'pool' and ${col} in ($1, $2)`, [a, b]);
+  }
+}
+
 async function updatePlayer(q: Query, body: Record<string, unknown>) {
   const id = int(body.id, "Player id", 1, 1_000_000);
   const sets: string[] = [];
@@ -204,6 +231,9 @@ export async function POST(req: Request) {
           break;
         case "swapPlayers":
           await swapPlayers(q, body);
+          break;
+        case "swapTeams":
+          await swapTeams(q, body);
           break;
         case "setAdmin": {
           const id = int(body.id, "Player", 1, 1_000_000);

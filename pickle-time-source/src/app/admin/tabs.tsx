@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { CheckCircle2, Loader2, Minus, Plus, Sparkles, Trash2, Users, Wand2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, GripVertical, ImagePlus, Loader2, Minus, Plus, Sparkles, Trash2, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
-import { StatusBadge, TeamDot } from "@/components/bits";
+import { PlayerAvatar, StatusBadge, TeamDot } from "@/components/bits";
 import { TeamSelect } from "@/components/my-team";
 import { useTourney } from "@/components/tourney-provider";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
   displayStatus,
   groupName,
   poolPlayComplete,
+  POOLS,
   teamDisplayName,
   priorsScored,
   qfRematches,
@@ -31,6 +32,7 @@ import {
   type Player,
   type TourneyState,
 } from "@/lib/tourney";
+import { resizePhoto } from "@/lib/resize-photo";
 import { cn } from "@/lib/utils";
 import { adminAction } from "./admin-api";
 
@@ -440,48 +442,240 @@ function AdhocCreator({ state }: { state: TourneyState }) {
 
 /* --------------------------------- Pairing ---------------------------------- */
 
+const DRAG_THRESHOLD = 6;
+const SCROLL_EDGE = 72;
+
+type DragView = { teamId: number; label: string; x: number; y: number; overId: number | null };
+
+type DragSession = {
+  teamId: number;
+  label: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  x: number;
+  y: number;
+  dragging: boolean;
+  overId: number | null;
+  frame: number | null;
+  detach: () => void;
+};
+
+function dropTargetAt(x: number, y: number): number | null {
+  const el = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-drop-team]");
+  const id = Number(el?.dataset.dropTeam);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 export function PairingTab({ state }: { state: TourneyState }) {
   const { run, busy } = useRun();
-  const teams = [...state.teams].sort((a, b) => a.pool.localeCompare(b.pool) || a.poolPos - b.poolPos);
   const players = [...state.players].sort((a, b) => compareNames(a.name, b.name));
+  const courts = POOLS.map((pool, i) => ({
+    pool,
+    court: i + 1,
+    teams: state.teams.filter((t) => t.pool === pool).sort((a, b) => a.poolPos - b.poolPos),
+  }));
+  const [selected, setSelected] = useState<number | null>(null);
+  const [drag, setDrag] = useState<DragView | null>(null);
+  const selectedRef = useRef<number | null>(null);
+  const session = useRef<DragSession | null>(null);
+
+  const select = (id: number | null) => {
+    selectedRef.current = id;
+    setSelected(id);
+  };
+
+  const label = (id: number) => {
+    const team = state.teams.find((t) => t.id === id);
+    return team ? teamDisplayName(team, state.players) : "team";
+  };
+
+  async function swap(a: number, b: number) {
+    select(null);
+    await run({ action: "swapTeams", a, b }, "Teams moved");
+  }
+
+  function tap(id: number) {
+    const current = selectedRef.current;
+    if (current === null) select(id);
+    else if (current === id) select(null);
+    else void swap(current, id);
+  }
+
+  useEffect(() => () => session.current?.detach(), []);
+
+  function onHandleDown(e: React.PointerEvent<HTMLButtonElement>, teamId: number, teamLabel: string) {
+    if (busy || session.current || (e.pointerType === "mouse" && e.button !== 0)) return;
+    e.preventDefault();
+
+    const step = () => {
+      const s = session.current;
+      if (!s?.dragging) return;
+      const dy = s.y < SCROLL_EDGE ? -(SCROLL_EDGE - s.y) : s.y > window.innerHeight - SCROLL_EDGE ? s.y - (window.innerHeight - SCROLL_EDGE) : 0;
+      if (dy !== 0) {
+        window.scrollBy(0, Math.round(dy / 3));
+        const overId = dropTargetAt(s.x, s.y);
+        if (overId !== s.overId) {
+          s.overId = overId;
+          setDrag({ teamId: s.teamId, label: s.label, x: s.x, y: s.y, overId });
+        }
+      }
+      s.frame = requestAnimationFrame(step);
+    };
+
+    const move = (ev: PointerEvent) => {
+      const s = session.current;
+      if (!s || ev.pointerId !== s.pointerId) return;
+      s.x = ev.clientX;
+      s.y = ev.clientY;
+      if (!s.dragging) {
+        if (Math.hypot(s.x - s.startX, s.y - s.startY) < DRAG_THRESHOLD) return;
+        s.dragging = true;
+        select(null);
+        document.body.style.userSelect = "none";
+        s.frame = requestAnimationFrame(step);
+      }
+      ev.preventDefault();
+      s.overId = dropTargetAt(s.x, s.y);
+      setDrag({ teamId: s.teamId, label: s.label, x: s.x, y: s.y, overId: s.overId });
+    };
+
+    const end = (ev: PointerEvent) => {
+      const s = session.current;
+      if (!s || ev.pointerId !== s.pointerId) return;
+      s.detach();
+      if (ev.type === "pointercancel") return;
+      if (s.dragging) {
+        const target = dropTargetAt(ev.clientX, ev.clientY);
+        if (target !== null && target !== s.teamId) void swap(s.teamId, target);
+      } else {
+        tap(s.teamId);
+      }
+    };
+
+    const detach = () => {
+      const s = session.current;
+      if (s?.frame != null) cancelAnimationFrame(s.frame);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+      document.body.style.userSelect = "";
+      session.current = null;
+      setDrag(null);
+    };
+
+    session.current = {
+      teamId,
+      label: teamLabel,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      x: e.clientX,
+      y: e.clientY,
+      dragging: false,
+      overId: null,
+      frame: null,
+      detach,
+    };
+    window.addEventListener("pointermove", move, { passive: false });
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+  }
 
   return (
     <div className="space-y-3" data-testid="pairing">
       <FinalizeTeams state={state} />
-      <p className="text-sm text-muted-foreground">Pick who plays together. Swapping a name trades their spot with the person you choose.</p>
-      <div className="grid grid-cols-3 gap-2">
-      {teams.map((team) => {
-        const seats = state.players.filter((p) => p.teamId === team.id).sort((a, b) => a.slot - b.slot || a.id - b.id);
-        return (
-          <Card key={team.id} size="sm" className="gap-2 py-3" data-testid={`pair-team-${team.id}`}>
-            <CardContent className="space-y-2 px-2">
-              <p className="text-center font-display text-sm font-bold uppercase leading-tight">{teamDisplayName(team, state.players)}</p>
-              {seats.map((seat) => (
-                <label key={seat.id} className="block">
-                  <span className="sr-only">Player {seat.slot}</span>
-                  <select
-                    aria-label={`${teamDisplayName(team, state.players)} player ${seat.slot}`}
-                    disabled={busy}
-                    value={seat.id}
-                    onChange={(e) => {
-                      const next = Number(e.target.value);
-                      if (next !== seat.id) void run({ action: "swapPlayers", a: seat.id, b: next }, "Pairing saved");
-                    }}
-                    className="h-9 w-full rounded-lg bg-muted px-1.5 text-xs"
+      <p className="text-sm text-muted-foreground">
+        Pick who plays together. Swapping a name trades their spot with the person you choose. To move a whole pair to another court, drag it by its{" "}
+        <GripVertical className="inline size-3.5 align-[-2px]" /> handle onto another pair, or tap one handle and then another. The two pairs trade places and
+        take over each other&apos;s schedule.
+      </p>
+      {selected !== null && (
+        <p className="rounded-lg bg-primary/10 px-3 py-2 text-sm" data-testid="move-hint">
+          Moving <span className="font-semibold">{label(selected)}</span>. Tap another pair&apos;s handle to swap, or tap it again to cancel.
+        </p>
+      )}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {courts.map(({ pool, court, teams }) => (
+          <section key={pool} className="space-y-2" data-testid={`pair-court-${court}`}>
+            <h3 className="font-display text-lg font-bold uppercase">Court {court}</h3>
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
+              {teams.map((team) => {
+                const seats = state.players.filter((p) => p.teamId === team.id).sort((a, b) => a.slot - b.slot || a.id - b.id);
+                const name = teamDisplayName(team, state.players);
+                const isSource = drag?.teamId === team.id || selected === team.id;
+                const isTarget = drag !== null && drag.overId === team.id && drag.teamId !== team.id;
+                return (
+                  <Card
+                    key={team.id}
+                    size="sm"
+                    data-drop-team={team.id}
+                    data-testid={`pair-team-${team.id}`}
+                    className={cn(
+                      "gap-2 py-3 transition-shadow",
+                      isSource && "ring-2 ring-primary",
+                      drag?.teamId === team.id && "opacity-50",
+                      isTarget && "bg-primary/10 ring-2 ring-amber-300",
+                    )}
                   >
-        {players.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name.trim() || "Open spot"}
-          </option>
+                    <CardContent className="space-y-2 px-2">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          aria-label={`Move ${name}`}
+                          aria-pressed={selected === team.id}
+                          data-testid={`pair-handle-${team.id}`}
+                          disabled={busy}
+                          style={{ touchAction: "none" }}
+                          onPointerDown={(e) => onHandleDown(e, team.id, name)}
+                          onClick={(e) => {
+                            if (e.detail === 0) tap(team.id);
+                          }}
+                          className="-my-1 flex size-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground active:cursor-grabbing disabled:opacity-50"
+                        >
+                          <GripVertical className="size-4" />
+                        </button>
+                        <p className="min-w-0 flex-1 font-display text-sm font-bold uppercase leading-tight">{name}</p>
+                      </div>
+                      {seats.map((seat) => (
+                        <label key={seat.id} className="block">
+                          <span className="sr-only">Player {seat.slot}</span>
+                          <select
+                            aria-label={`${name} player ${seat.slot}`}
+                            disabled={busy}
+                            value={seat.id}
+                            onChange={(e) => {
+                              const next = Number(e.target.value);
+                              if (next !== seat.id) void run({ action: "swapPlayers", a: seat.id, b: next }, "Pairing saved");
+                            }}
+                            className="h-9 w-full rounded-lg bg-muted px-1.5 text-xs"
+                          >
+                            {players.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.name.trim() || "Open spot"}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
         ))}
-                  </select>
-                </label>
-              ))}
-            </CardContent>
-          </Card>
-        );
-      })}
       </div>
+      {drag && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed z-50 max-w-56 -translate-x-1/2 -translate-y-[130%] rounded-lg bg-primary px-3 py-2 font-display text-sm font-bold uppercase text-primary-foreground shadow-xl"
+          style={{ left: drag.x, top: drag.y }}
+          data-testid="drag-ghost"
+        >
+          {drag.label}
+        </div>
+      )}
     </div>
   );
 }
@@ -539,200 +733,149 @@ function FinalizeTeams({ state }: { state: TourneyState }) {
   );
 }
 
-/* ------------------------------ Teams & players ----------------------------- */
-
-type PlayerDraft = { name: string; isAdmin: boolean };
-type TeamDraft = { name: string; color: string; players: Record<number, PlayerDraft> };
+/* --------------------------------- Players ---------------------------------- */
 
 function storedText(value: string): string {
   return value.replace(/[\r\n\t]+/g, " ").trim();
 }
 
-function teamPlayers(state: TourneyState, teamId: number): Player[] {
-  return state.players.filter((p) => p.teamId === teamId).sort((a, b) => a.slot - b.slot || a.id - b.id);
-}
-
-function draftFromState(state: TourneyState): Record<number, TeamDraft> {
-  const drafts: Record<number, TeamDraft> = {};
-  for (const team of state.teams) {
-    const players: Record<number, PlayerDraft> = {};
-    for (const player of teamPlayers(state, team.id)) {
-      players[player.id] = { name: player.name, isAdmin: player.isAdmin };
-    }
-    drafts[team.id] = { name: team.name, color: team.color, players };
-  }
-  return drafts;
-}
-
-function playerDraft(draft: TeamDraft | undefined, player: Player): PlayerDraft {
-  return draft?.players[player.id] ?? { name: player.name, isAdmin: player.isAdmin };
-}
-
-function teamsDirty(state: TourneyState, drafts: Record<number, TeamDraft>): boolean {
-  for (const team of state.teams) {
-    const draft = drafts[team.id];
-    if (!draft) continue;
-    if (storedText(draft.name) !== storedText(team.name) || draft.color.toLowerCase() !== team.color.toLowerCase()) return true;
-    for (const player of teamPlayers(state, team.id)) {
-      const next = playerDraft(draft, player);
-      if (storedText(next.name) !== storedText(player.name) || next.isAdmin !== player.isAdmin) return true;
-    }
-  }
-  return false;
-}
-
-export function TeamsTab({ state }: { state: TourneyState }) {
+export function PlayersTab({ state }: { state: TourneyState }) {
   const { refresh } = useTourney();
-  const [drafts, setDrafts] = useState(() => draftFromState(state));
+  const { run, busy } = useRun();
+  const [names, setNames] = useState<Record<number, string>>({});
   const [saving, setSaving] = useState(false);
-  const dirty = useMemo(() => teamsDirty(state, drafts), [state, drafts]);
-
-  function patchTeam(teamId: number, patch: Partial<Pick<TeamDraft, "name" | "color">>) {
-    setDrafts((prev) => {
-      const team = state.teams.find((t) => t.id === teamId);
-      const current = prev[teamId] ?? { name: team?.name ?? "", color: team?.color ?? "#888888", players: {} };
-      return { ...prev, [teamId]: { ...current, ...patch } };
-    });
-  }
-
-  function patchPlayer(teamId: number, player: Player, patch: Partial<PlayerDraft>) {
-    setDrafts((prev) => {
-      const team = state.teams.find((t) => t.id === teamId);
-      const current = prev[teamId] ?? { name: team?.name ?? "", color: team?.color ?? "#888888", players: {} };
-      const row = playerDraft(current, player);
-      return {
-        ...prev,
-        [teamId]: { ...current, players: { ...current.players, [player.id]: { ...row, ...patch } } },
-      };
-    });
-  }
+  const players = useMemo(() => [...state.players].sort((a, b) => compareNames(a.name, b.name) || a.id - b.id), [state.players]);
+  const changed = players.filter((p) => p.id in names && storedText(names[p.id]) !== storedText(p.name));
 
   async function save() {
-    if (!dirty || saving) return;
-    const bodies: Record<string, unknown>[] = [];
-    const adminBodies: Record<string, unknown>[] = [];
-    for (const team of state.teams) {
-      const draft = drafts[team.id];
-      if (!draft) continue;
-      if (storedText(draft.name) !== storedText(team.name) || draft.color.toLowerCase() !== team.color.toLowerCase()) {
-        bodies.push({ action: "updateTeam", id: team.id, name: draft.name, color: draft.color });
-      }
-      for (const player of teamPlayers(state, team.id)) {
-        const next = playerDraft(draft, player);
-        if (storedText(next.name) !== storedText(player.name)) {
-          bodies.push({ action: "updatePlayer", id: player.id, name: next.name });
-        }
-        if (next.isAdmin !== player.isAdmin) {
-          adminBodies.push({ action: "setAdmin", id: player.id, isAdmin: next.isAdmin });
-        }
-      }
-    }
-    adminBodies.sort((a, b) => Number(b.isAdmin === true) - Number(a.isAdmin === true));
+    if (!changed.length || saving) return;
     setSaving(true);
     try {
-      for (const body of [...bodies, ...adminBodies]) await adminAction(body);
-      toast.success("Teams saved");
-      await refresh();
+      for (const p of changed) await adminAction({ action: "updatePlayer", id: p.id, name: names[p.id] });
+      toast.success(changed.length === 1 ? "Name saved" : "Names saved");
+      setNames({});
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong");
-      await refresh();
     } finally {
+      await refresh();
       setSaving(false);
     }
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-end">
-        <Button size="sm" data-testid="save-teams" disabled={!dirty || saving} onClick={() => void save()}>
+    <div className="space-y-2" data-testid="players-admin">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">Names and photos show on each player&apos;s profile.</p>
+        <Button size="sm" data-testid="save-players" disabled={!changed.length || saving} onClick={() => void save()}>
           {saving && <Loader2 className="animate-spin" />} Save
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-2" data-testid="team-editors">
-        {state.teams.map((team) => (
-          <TeamEditor
-            key={team.id}
-            team={team}
-            players={teamPlayers(state, team.id)}
-            draft={drafts[team.id]}
-            disabled={saving}
-            onTeam={(patch) => patchTeam(team.id, patch)}
-            onPlayer={(player, patch) => patchPlayer(team.id, player, patch)}
+      <ul className="grid gap-2 lg:grid-cols-2">
+        {players.map((player) => (
+          <PlayerRow
+            key={player.id}
+            player={player}
+            name={names[player.id] ?? player.name}
+            disabled={saving || busy}
+            onName={(name) => setNames((prev) => ({ ...prev, [player.id]: name }))}
+            run={run}
           />
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
 
-function TeamEditor({
-  team,
-  players,
-  draft,
+function PlayerRow({
+  player,
+  name,
   disabled,
-  onTeam,
-  onPlayer,
+  onName,
+  run,
 }: {
-  team: TourneyState["teams"][number];
-  players: Player[];
-  draft: TeamDraft | undefined;
+  player: Player;
+  name: string;
   disabled: boolean;
-  onTeam: (patch: Partial<Pick<TeamDraft, "name" | "color">>) => void;
-  onPlayer: (player: Player, patch: Partial<PlayerDraft>) => void;
+  onName: (name: string) => void;
+  run: ReturnType<typeof useRun>["run"];
 }) {
-  const name = draft?.name ?? team.name;
-  const color = draft?.color ?? team.color;
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const label = player.name.trim() || `Player ${player.id}`;
+
+  async function onFile(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const photo = await resizePhoto(file);
+      await run({ action: "updatePlayer", id: player.id, photo }, "Photo saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't use that photo");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   return (
-    <Card size="sm" className="min-w-0 gap-2 py-2" data-testid={`team-editor-${team.id}`}>
-      <CardContent className="space-y-1.5 px-2">
-        <div className="flex items-center gap-1.5">
-          <input
-            type="color"
-            value={color}
-            disabled={disabled}
-            onChange={(e) => onTeam({ color: e.target.value })}
-            aria-label={`${team.name} color`}
-            className="size-6 shrink-0 cursor-pointer rounded-md bg-transparent"
-          />
-          <Input
-            value={name}
-            disabled={disabled}
-            onChange={(e) => onTeam({ name: e.target.value })}
-            maxLength={50}
-            aria-label={`${team.name} name`}
-            className="h-7 min-w-0 px-1.5 text-xs font-semibold"
-          />
-        </div>
-        {players.map((player) => {
-          const row = playerDraft(draft, player);
-          return (
-            <div key={player.id} className="flex items-center gap-1">
-              <Input
-                value={row.name}
-                disabled={disabled}
-                onChange={(e) => onPlayer(player, { name: e.target.value })}
-                maxLength={60}
-                aria-label={`${team.name} player ${player.slot} name`}
-                className="h-7 min-w-0 flex-1 px-1.5 text-xs"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant={row.isAdmin ? "default" : "outline"}
-                aria-pressed={row.isAdmin}
-                data-testid={`admin-toggle-${player.id}`}
-                disabled={disabled}
-                className="h-7 shrink-0 px-1.5 text-[10px]"
-                onClick={() => onPlayer(player, { isAdmin: !row.isAdmin })}
-              >
-                {row.isAdmin ? "Admin" : "Make admin"}
-              </Button>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+    <li className="flex items-center gap-2 rounded-xl bg-card px-2 py-1.5 ring-1 ring-foreground/10" data-testid={`player-row-${player.id}`}>
+      <PlayerAvatar player={player} size={40} />
+      <Input
+        value={name}
+        disabled={disabled}
+        onChange={(e) => onName(e.target.value)}
+        maxLength={60}
+        aria-label={`${label} name`}
+        data-testid={`player-name-${player.id}`}
+        className="h-8 min-w-0 flex-1 px-2 text-sm"
+      />
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        data-testid={`player-photo-input-${player.id}`}
+        onChange={(e) => void onFile(e.target.files?.[0])}
+      />
+      <Button
+        type="button"
+        size="icon-sm"
+        variant="outline"
+        aria-label={player.hasPhoto ? `Change ${label} photo` : `Add ${label} photo`}
+        title={player.hasPhoto ? "Change photo" : "Add photo"}
+        data-testid={`player-photo-${player.id}`}
+        disabled={disabled || uploading}
+        onClick={() => fileRef.current?.click()}
+      >
+        {uploading ? <Loader2 className="animate-spin" /> : <ImagePlus />}
+      </Button>
+      {player.hasPhoto && (
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          aria-label={`Remove ${label} photo`}
+          title="Remove photo"
+          data-testid={`player-photo-remove-${player.id}`}
+          disabled={disabled || uploading}
+          onClick={() => window.confirm(`Remove ${label}'s photo?`) && void run({ action: "updatePlayer", id: player.id, photo: null }, "Photo removed")}
+        >
+          <Trash2 />
+        </Button>
+      )}
+      <Button
+        type="button"
+        size="sm"
+        variant={player.isAdmin ? "default" : "outline"}
+        aria-pressed={player.isAdmin}
+        data-testid={`admin-toggle-${player.id}`}
+        disabled={disabled}
+        className="h-7 shrink-0 px-1.5 text-[10px]"
+        onClick={() => void run({ action: "setAdmin", id: player.id, isAdmin: !player.isAdmin }, player.isAdmin ? `${label} is no longer an admin` : `${label} is now an admin`)}
+      >
+        {player.isAdmin ? "Admin" : "Make admin"}
+      </Button>
+    </li>
   );
 }
 
