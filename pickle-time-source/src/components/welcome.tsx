@@ -110,8 +110,6 @@ function ProfileBody({
             </div>
           </div>
 
-          <PlayerTeamPanel state={state} player={player} onOpenPlayer={onOpenPlayer} />
-
           <div>
             <h2 className="font-display text-2xl font-bold uppercase">About</h2>
             {player.bio ? (
@@ -140,6 +138,8 @@ function ProfileBody({
               <p className="mt-2 text-sm text-muted-foreground">No stats yet.</p>
             )}
           </div>
+
+          <PlayerTeamPanel state={state} player={player} onOpenPlayer={onOpenPlayer} />
         </div>
       )}
     </section>

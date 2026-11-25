@@ -146,11 +146,7 @@ function Sheet({
             </div>
           </div>
 
-          <div className="mt-6 space-y-4 empty:hidden">
-            <PlayerTeamPanel state={state} player={player} onOpenPlayer={onOpenPlayer} />
-          </div>
-
-          <section className="mt-4 rounded-2xl bg-card p-4">
+          <section className="mt-6 rounded-2xl bg-card p-4">
             <h2 className="font-display text-xl font-bold uppercase">About</h2>
             {player.bio ? (
               <p className="mt-2 whitespace-pre-line leading-relaxed" data-testid="player-bio">
@@ -176,6 +172,10 @@ function Sheet({
               <p className="mt-2 text-muted-foreground">No stats yet.</p>
             )}
           </section>
+
+          <div className="mt-4 space-y-4 empty:hidden">
+            <PlayerTeamPanel state={state} player={player} onOpenPlayer={onOpenPlayer} />
+          </div>
         </>
       )}
     </PopupSheet>
