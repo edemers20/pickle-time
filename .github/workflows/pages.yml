@@ -20,14 +20,11 @@ concurrency:
 env:
   # Public URL of the Vercel-hosted app (no trailing slash).
   # Override without editing this file by setting the repository variable PICKLE_TIME_URL.
-  PICKLE_TIME_URL: ${{ vars.PICKLE_TIME_URL || 'https://pickle-time-emma-f447.vercel.app' }}
+  PICKLE_TIME_URL: ${{ vars.PICKLE_TIME_URL || 'https://pickle-time-live.vercel.app' }}
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -44,9 +41,17 @@ jobs:
 
       - uses: actions/configure-pages@v5
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
+  # Deploying from a separate job ensures the artifact is finalized before deploy-pages looks it up.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
