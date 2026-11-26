@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { EmptyState, PageHeader, PlayerAvatar, TeamDot, WithState } from "@/components/bits";
+import { EmptyState, PageHeader, PlayerAvatar, WithState } from "@/components/bits";
 import { useViewingTeam } from "@/components/my-team";
 import { useOpenPlayer } from "@/components/open-player";
+import { PairCard } from "@/components/pair-card";
 import { Input } from "@/components/ui/input";
 import { compareNames, teamLabel, teamRoster, type Player, type TourneyState } from "@/lib/tourney";
-import { cn } from "@/lib/utils";
 
 export default function TeamsPage() {
   return <WithState>{(state) => <Players state={state} />}</WithState>;
@@ -71,33 +71,15 @@ function Pairs({ state, needle, query }: { state: TourneyState; needle: string; 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="team-pairs">
       {teams.map(({ team, label, roster }) => (
-        <section
+        <PairCard
           key={team.id}
-          className={cn("rounded-xl bg-card p-3 text-card-foreground", myTeam === team.id && "ring-2 ring-primary")}
-          data-testid={`team-pair-${team.id}`}
-        >
-          <h2 className="mb-3 flex min-w-0 items-center gap-2 font-display text-base font-bold uppercase leading-tight">
-            <TeamDot color={team.color} />
-            <span className="min-w-0 break-words">{label}</span>
-          </h2>
-          <div className="grid grid-cols-2 gap-2">
-            {roster.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                data-testid="open-player"
-                onClick={() => openPlayer(p.id)}
-                className="flex min-w-0 cursor-pointer flex-col items-center gap-2 rounded-lg bg-muted/40 px-2 py-3 text-center text-sm"
-              >
-                <PlayerAvatar player={p} size={56} />
-                <span className="w-full min-w-0">
-                  <span className="block truncate font-display text-base font-bold uppercase">{p.name}</span>
-                  {p.nickname && <span className="block truncate text-xs text-muted-foreground">{p.nickname}</span>}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
+          label={label}
+          color={team.color}
+          roster={roster}
+          highlight={myTeam === team.id}
+          onOpenPlayer={openPlayer}
+          testId={`team-pair-${team.id}`}
+        />
       ))}
     </div>
   );
