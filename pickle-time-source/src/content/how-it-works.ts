@@ -41,7 +41,7 @@ export const HOW_IT_WORKS = {
     courtLabel: "Court",
     exampleNote: "Example!",
     vs: "vs",
-    // One game per court, in the same order as the groups above (Red, Green, Blue).
+    // One game per court, in order: Court 1, Court 2, Court 3.
     exampleGames: [
       { a: { name: "Alex Kim & Jordan Lee", color: "#f43f5e" }, b: { name: "Taylor Brooks & Drew Hall", color: "#38bdf8" } },
       { a: { name: "Sam Patel & Riley Chen", color: "#2dd4bf" }, b: { name: "Jamie Fox & Avery Moss", color: "#facc15" } },

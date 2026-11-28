@@ -2,12 +2,12 @@
 
 import { Info, Trophy } from "lucide-react";
 import { useState } from "react";
-import { pillInk, TeamDot, teamPillClass } from "@/components/bits";
+import { pillInk, teamPillClass } from "@/components/bits";
 import { PairCard } from "@/components/pair-card";
 import { useTourney } from "@/components/tourney-provider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HOW_IT_WORKS as COPY } from "@/content/how-it-works";
-import { clockTime, COURTS, GROUP_NAME, POOLS, TIMES, type PoolId } from "@/lib/tourney";
+import { clockTime, COURTS, TIMES } from "@/lib/tourney";
 import { cn } from "@/lib/utils";
 
 const TIME_KEYS = {
@@ -19,8 +19,6 @@ const TIME_KEYS = {
   final: TIMES.final,
   awards: TIMES.awards,
 } as const;
-
-const GROUP_COLOR: Record<PoolId, string> = { A: "#ef4444", B: "#22c55e", C: "#3b82f6" };
 
 export function HowItWorksButton() {
   const [open, setOpen] = useState(false);
@@ -103,19 +101,14 @@ function HowItWorks({ open, onClose }: { open: boolean; onClose: () => void }) {
 
           <Section title={COPY.groups.heading} testId="how-groups">
             <p className="text-muted-foreground">{fill(COPY.groups.body)}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{fill(COPY.groups.rules)}</p>
             <p className="mt-3 text-sm text-muted-foreground">{fill(COPY.groups.exampleNote)}</p>
             <div className="mt-2 grid gap-2 sm:grid-cols-3" data-testid="how-example-pills">
-              {POOLS.map((pool, i) => {
+              {COURTS.map((court, i) => {
                 const game = COPY.groups.exampleGames[i];
                 return (
-                  <div key={pool} className="flex min-w-0 flex-col items-center gap-2 rounded-xl bg-card px-3 py-3 text-center">
-                    <span className="flex items-center gap-1.5 text-sm font-semibold">
-                      <TeamDot color={GROUP_COLOR[pool]} />
-                      {GROUP_NAME[pool]}
-                      <span className="font-normal text-muted-foreground">
-                        {COPY.groups.courtLabel} {COURTS[i]}
-                      </span>
+                  <div key={court} className="flex min-w-0 flex-col items-center gap-2 rounded-xl bg-card px-3 py-3 text-center">
+                    <span className="text-sm font-semibold">
+                      {COPY.groups.courtLabel} {court}
                     </span>
                     {game && (
                       <div className="flex w-full min-w-0 flex-col items-center gap-1">
@@ -171,22 +164,6 @@ function HowItWorks({ open, onClose }: { open: boolean; onClose: () => void }) {
                 );
               })}
             </div>
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-              {COPY.playoffs.rules.map((rule) => (
-                <li key={rule}>{fill(rule)}</li>
-              ))}
-            </ul>
-          </Section>
-
-          <Section title={COPY.schedule.heading} testId="how-schedule">
-            <dl className="divide-y divide-border/60 rounded-xl bg-card">
-              {COPY.schedule.rows.map((row) => (
-                <div key={row.label} className="flex items-center gap-4 px-3 py-2">
-                  <dt className="w-20 shrink-0 font-semibold tabular-nums">{fill(row.time)}</dt>
-                  <dd className="text-muted-foreground">{fill(row.label)}</dd>
-                </div>
-              ))}
-            </dl>
           </Section>
         </div>
       </DialogContent>
