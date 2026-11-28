@@ -1,10 +1,4 @@
-/**
- * Copy for the "How it works" info sheet (the "i" button in the header).
- *
- * Edit any text here. Words in curly braces, like {groupStart}, are swapped for clock
- * times worked out from the start time on the desk, so keep those as they are:
- * {checkIn} {groupStart} {groupEnd} {quarters} {semis} {final} {awards}
- */
+/** Copy for the "How it works" info sheet (the "i" button in the header). Edit any text here. */
 export const HOW_IT_WORKS = {
   buttonLabel: "How it works",
   title: "How it works",
@@ -26,46 +20,21 @@ export const HOW_IT_WORKS = {
     ],
   },
 
-  games: {
-    heading: "How many games",
-    rows: [
-      { value: "4", label: "Everyone", note: "In group stage" },
-      { value: "6", label: "Seeds 1 and 2", note: "If you win a lot and get a bye to the semis" },
-      { value: "7", label: "Seeds 3 to 6", note: "Most you can play incl the final" },
-    ],
-  },
-
-  groups: {
-    heading: "Group stage",
-    body: "Every team gets assigned a court and every court plays all teams their court once. A new round starts every 10 minutes (hopefully) from {groupStart}. Tryna run a tight ship because we have a hard stop at 7",
-    courtLabel: "Court",
-    exampleNote: "Example!",
-    vs: "vs",
-    // One game per court, in order: Court 1, Court 2, Court 3.
-    exampleGames: [
-      { a: { name: "Alex Kim & Jordan Lee", color: "#f43f5e" }, b: { name: "Taylor Brooks & Drew Hall", color: "#38bdf8" } },
-      { a: { name: "Sam Patel & Riley Chen", color: "#2dd4bf" }, b: { name: "Jamie Fox & Avery Moss", color: "#facc15" } },
-      { a: { name: "Casey Wu & Morgan Diaz", color: "#e879f9" }, b: { name: "Quinn Ross & Blake Ito", color: "#22d3ee" } },
-    ],
-  },
-
-  seeding: {
-    heading: "How seeds work",
-    body: "When group stage ends, teams are ranked by:",
-    order: [
-      "Wins",
-      "Point difference, counting at most 7 points per game",
-      "Fewest points given up",
-    ],
-  },
-
-  playoffs: {
-    heading: "Playoffs",
-    body: "Top 6 teams play playoffs. We have plenty of courts so everyone else can still play for 7th and below or do whatnot and mingle.",
-    rounds: [
-      { title: "Quarterfinals", time: "{quarters}", games: ["3 vs 6", "4 vs 5"] },
-      { title: "Semifinals", time: "{semis}", games: ["1 vs winner of 4 and 5", "2 vs winner of 3 and 6"] },
-      { title: "Final", time: "{final}", games: ["Semifinal winners"] },
+  faq: {
+    heading: "General FAQ",
+    items: [
+      {
+        q: "How many games will I play?",
+        a: "We'll definitely start with a round robin, so everyone plays at least 4 games.",
+      },
+      {
+        q: "Will there be a prize?",
+        a: "Yes! Not to mention the bragging rights.",
+      },
+      {
+        q: "Should I bring anything?",
+        a: "The normal tournament stuff: things to heckle with, a fiery competitive spirit, water, etc. Paddles and such are provided.",
+      },
     ],
   },
 } as const;

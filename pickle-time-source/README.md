@@ -35,7 +35,7 @@ There is no Gold, Silver, or Bronze bracket and no separate 3rd-place game.
 | `/players/[id]/edit?token=…` | The player's own editor (photo, nickname, bio, stats) |
 | `/admin` | Tournament desk (passcode) |
 
-The "i" button in the header opens **How it works**: a sample of the Teams page, how many games each team plays, group play, seeding and the playoff bracket. All of its text lives in `src/content/how-it-works.ts`. Times like `{groupStart}` are filled in from the start time on the desk.
+The "i" button in the header opens **How it works**: a note for players and spectators, a sample of the Teams page and a short FAQ. All of its text lives in `src/content/how-it-works.ts`.
 
 ## Run it locally
 
