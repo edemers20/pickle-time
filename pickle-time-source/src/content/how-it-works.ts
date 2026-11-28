@@ -11,7 +11,7 @@ export const HOW_IT_WORKS = {
 
   teams: {
     heading: "Your team",
-    body: "Teams will go on the Players tab once teams are set. It will look like this.",
+    body: "Teams will go on the Players tab once teams are set. It will look like this. In the meantime, feel free to take a look at the competition",
     caption: "Examples names!! We don't know these people.",
     samples: [
       { color: "#f43f5e", players: [{ name: "Alex Kim", nickname: "Kitchen Queen" }, { name: "Jordan Lee", nickname: "" }] },
@@ -25,15 +25,15 @@ export const HOW_IT_WORKS = {
     items: [
       {
         q: "How many games will I play?",
-        a: "We'll definitely start with a round robin, so everyone plays at least 4 games.",
+        a: "We'll def start with a round robin style thing, so everyone will play at least 4 games. There will also be courtspace to do a bit of open play and whatnot",
       },
       {
         q: "Will there be a prize?",
-        a: "Yes! Not to mention the bragging rights.",
+        a: "Of course and it's gonna be really good! Not to mention the bragging rights.",
       },
       {
         q: "Should I bring anything?",
-        a: "The normal tournament stuff: things to heckle with, a fiery competitive spirit, water, etc. Paddles and such are provided.",
+        a: "Probably the normal tournament stuff: things to heckle with, a fiery, competitive spirit, water, etc. Paddles and such are provided.",
       },
     ],
   },
