@@ -2,7 +2,7 @@
 
 import { Info, Trophy } from "lucide-react";
 import { useState } from "react";
-import { LOST_PILL_COLOR, pillInk, TeamDot, teamPillClass } from "@/components/bits";
+import { pillInk, TeamDot, teamPillClass } from "@/components/bits";
 import { PairCard } from "@/components/pair-card";
 import { useTourney } from "@/components/tourney-provider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -58,6 +58,13 @@ function HowItWorks({ open, onClose }: { open: boolean; onClose: () => void }) {
         <DialogHeader className="px-5 pt-5 pb-2">
           <DialogTitle className="font-display text-3xl font-bold uppercase">{COPY.title}</DialogTitle>
           <DialogDescription className="text-base text-foreground/80">{fill(COPY.intro)}</DialogDescription>
+          <div className="grid gap-2 pt-2 sm:grid-cols-2" data-testid="how-roles">
+            {COPY.roles.map((role) => (
+              <p key={role.who} className="rounded-xl bg-card px-3 py-2 text-sm">
+                <span className="font-semibold">{role.who}</span> <span className="text-muted-foreground">{fill(role.text)}</span>
+              </p>
+            ))}
+          </div>
         </DialogHeader>
 
         <div className="space-y-7 px-5 pt-3 pb-6">
@@ -120,12 +127,6 @@ function HowItWorks({ open, onClose }: { open: boolean; onClose: () => void }) {
                   </div>
                 );
               })}
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">{fill(COPY.groups.resultNote)}</p>
-            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 rounded-xl bg-card px-3 py-3 opacity-80">
-              <SamplePill {...COPY.groups.exampleResult.a} lost={COPY.groups.exampleResult.a.score < COPY.groups.exampleResult.b.score} />
-              <span className="text-xs text-muted-foreground">{COPY.groups.vs}</span>
-              <SamplePill {...COPY.groups.exampleResult.b} lost={COPY.groups.exampleResult.b.score < COPY.groups.exampleResult.a.score} />
             </div>
           </Section>
 
@@ -193,11 +194,10 @@ function HowItWorks({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function SamplePill({ name, color, score, lost }: { name: string; color: string; score?: number; lost?: boolean }) {
-  const background = lost ? LOST_PILL_COLOR : color;
+function SamplePill({ name, color }: { name: string; color: string }) {
   return (
-    <span className={teamPillClass(true)} style={{ backgroundColor: background, color: pillInk(background) }}>
-      <span className="min-w-0 truncate">{score === undefined ? name : `${name} (${score})`}</span>
+    <span className={teamPillClass(true)} style={{ backgroundColor: color, color: pillInk(color) }}>
+      <span className="min-w-0 truncate">{name}</span>
     </span>
   );
 }

@@ -117,8 +117,6 @@ export function StatusBadge({ status }: { status: Match["status"] }) {
   return <Badge variant="outline" className="text-muted-foreground">Scheduled</Badge>;
 }
 
-export const LOST_PILL_COLOR = "#64748b";
-
 export function teamPillClass(compact?: boolean) {
   return cn(
     "inline-flex min-w-0 shrink items-center justify-center rounded-full font-semibold transition-colors duration-300",
@@ -169,7 +167,7 @@ function MatchSide({
   }
   const name = teamLabel(team, state);
   const label = score === null ? name : `${name} (${score})`;
-  const background = lost ? LOST_PILL_COLOR : team.color;
+  const background = lost ? "#64748b" : team.color;
   return (
     <button
       type="button"

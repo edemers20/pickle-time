@@ -10,6 +10,11 @@ export const HOW_IT_WORKS = {
   title: "How it works",
   intro: "15 teams of two, 3 courts, one champion. Every team plays 4 games, and the top 6 go to the playoffs.",
 
+  roles: [
+    { who: "Playing?", text: "Log in to edit your player profile." },
+    { who: "Watching?", text: "No login needed. See what's up and follow along." },
+  ],
+
   teams: {
     heading: "Your team",
     body: "Pairs go up on the Players tab once teams are set. It will look like this. Tap anyone to see their card.",
@@ -43,11 +48,6 @@ export const HOW_IT_WORKS = {
       { a: { name: "Sam Patel & Riley Chen", color: "#2dd4bf" }, b: { name: "Jamie Fox & Avery Moss", color: "#facc15" } },
       { a: { name: "Casey Wu & Morgan Diaz", color: "#e879f9" }, b: { name: "Quinn Ross & Blake Ito", color: "#22d3ee" } },
     ],
-    resultNote: "When a game ends, the score goes on each pill and the losing team turns gray.",
-    exampleResult: {
-      a: { name: "Alex Kim & Jordan Lee", color: "#f43f5e", score: 11 },
-      b: { name: "Taylor Brooks & Drew Hall", color: "#38bdf8", score: 7 },
-    },
   },
 
   seeding: {
