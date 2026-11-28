@@ -30,17 +30,16 @@ export const HOW_IT_WORKS = {
     heading: "How many games",
     rows: [
       { value: "4", label: "Everyone", note: "In group stage" },
-      { value: "6", label: "Seeds 1 and 2", note: "Most you can play, with a bye to the semis" },
-      { value: "7", label: "Seeds 3 to 6", note: "Most you can play, starting in the quarters" },
+      { value: "6", label: "Seeds 1 and 2", note: "If you win a lot and get a bye to the semis" },
+      { value: "7", label: "Seeds 3 to 6", note: "Most you can play incl the final" },
     ],
   },
 
   groups: {
-    heading: "Group play",
-    body: "You're in a group of 5 and play every other team in your group once. Each group stays on its own court. A new round starts every 10 minutes from {groupStart}, and you never play two rounds in a row.",
+    heading: "Group stage",
+    body: "Every team gets assigned a court and every court plays all teams their court once. A new round starts every 10 minutes (hopefully) from {groupStart}. Tryna run a tight ship because we have a hard stop at 7",
     courtLabel: "Court",
-    rules: "To 11, win by 1, 8 minute cap.",
-    exampleNote: "Here's what a round could look like. Each team shows up as a colored pill. Tap one to see who's on it.",
+    exampleNote: "Example!",
     vs: "vs",
     // One game per court, in the same order as the groups above (Red, Green, Blue).
     exampleGames: [
@@ -52,40 +51,21 @@ export const HOW_IT_WORKS = {
 
   seeding: {
     heading: "How seeds work",
-    body: "When group play ends at {groupEnd}, all 15 teams go on one table, no matter which group you were in. Teams are ranked by:",
+    body: "When group stage ends, teams are ranked by:",
     order: [
       "Wins",
       "Point difference, counting at most 7 points per game",
       "Fewest points given up",
-      "Head to head, if the tied teams played",
     ],
   },
 
   playoffs: {
     heading: "Playoffs",
-    body: "The top 6 seeds make it. Seeds 1 and 2 get a bye to the semis. Seeds 3 to 6 play a quarterfinal.",
+    body: "Top 6 teams play playoffs. We have plenty of courts so everyone else can still play for 7th and below or do whatnot and mingle.",
     rounds: [
       { title: "Quarterfinals", time: "{quarters}", games: ["3 vs 6", "4 vs 5"] },
       { title: "Semifinals", time: "{semis}", games: ["1 vs winner of 4 and 5", "2 vs winner of 3 and 6"] },
       { title: "Final", time: "{final}", games: ["Semifinal winners"] },
-    ],
-    rules: [
-      "Quarters and semis: to 11, win by 2, 11 minute cap.",
-      "Final: to 11, win by 2, no cap. Everyone watches on Court 1.",
-      "Both semifinal losers tie for 3rd. There's no 3rd place game.",
-      "Seeds 7 to 15 are done for the day. Court 3 is open play during the semis.",
-    ],
-  },
-
-  schedule: {
-    heading: "The day",
-    rows: [
-      { time: "{checkIn}", label: "Check in and warm up" },
-      { time: "{groupStart}", label: "Group play starts" },
-      { time: "{quarters}", label: "Quarterfinals" },
-      { time: "{semis}", label: "Semifinals" },
-      { time: "{final}", label: "Final" },
-      { time: "{awards}", label: "Awards" },
     ],
   },
 } as const;
