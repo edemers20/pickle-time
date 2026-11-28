@@ -5,6 +5,7 @@ import { Suspense, useState } from "react";
 import { usePathname } from "next/navigation";
 import { CalendarClock, GitBranch, Home, Lock, Table2, Users } from "lucide-react";
 import { PlayerAvatar } from "@/components/bits";
+import { HowItWorksButton } from "@/components/how-it-works";
 import { ProfileSheet } from "@/components/welcome";
 import { cn } from "@/lib/utils";
 import { usePlayerSession } from "@/components/player-session";
@@ -133,6 +134,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
           <PathAware render={(pathname) => <DesktopNav pathname={pathname} />} />
           <div className="ml-auto flex shrink-0 items-center gap-2">
+            <HowItWorksButton />
             <AccountControl onProfile={() => setProfileOpen(true)} />
           </div>
         </div>
