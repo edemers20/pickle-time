@@ -16,8 +16,8 @@ export const HOW_IT_WORKS = {
     caption: "Sample names. Your real teams show up here.",
     samples: [
       { color: "#f43f5e", players: [{ name: "Alex Kim", nickname: "Kitchen Queen" }, { name: "Jordan Lee", nickname: "" }] },
-      { color: "#38bdf8", players: [{ name: "Sam Patel", nickname: "" }, { name: "Riley Chen", nickname: "Big Dinker" }] },
-      { color: "#a3e635", players: [{ name: "Casey Wu", nickname: "Lob City" }, { name: "Morgan Diaz", nickname: "" }] },
+      { color: "#2dd4bf", players: [{ name: "Sam Patel", nickname: "" }, { name: "Riley Chen", nickname: "Big Dinker" }] },
+      { color: "#e879f9", players: [{ name: "Casey Wu", nickname: "Lob City" }, { name: "Morgan Diaz", nickname: "" }] },
     ],
   },
 
@@ -35,6 +35,19 @@ export const HOW_IT_WORKS = {
     body: "You're in a group of 5 and play every other team in your group once. Each group stays on its own court. A new round starts every 10 minutes from {groupStart}, and you never play two rounds in a row.",
     courtLabel: "Court",
     rules: "To 11, win by 1, 8 minute cap.",
+    exampleNote: "Here's what a round could look like. Each team shows up as a colored pill. Tap one to see who's on it.",
+    vs: "vs",
+    // One game per court, in the same order as the groups above (Red, Green, Blue).
+    exampleGames: [
+      { a: { name: "Alex Kim & Jordan Lee", color: "#f43f5e" }, b: { name: "Taylor Brooks & Drew Hall", color: "#38bdf8" } },
+      { a: { name: "Sam Patel & Riley Chen", color: "#2dd4bf" }, b: { name: "Jamie Fox & Avery Moss", color: "#facc15" } },
+      { a: { name: "Casey Wu & Morgan Diaz", color: "#e879f9" }, b: { name: "Quinn Ross & Blake Ito", color: "#22d3ee" } },
+    ],
+    resultNote: "When a game ends, the score goes on each pill and the losing team turns gray.",
+    exampleResult: {
+      a: { name: "Alex Kim & Jordan Lee", color: "#f43f5e", score: 11 },
+      b: { name: "Taylor Brooks & Drew Hall", color: "#38bdf8", score: 7 },
+    },
   },
 
   seeding: {

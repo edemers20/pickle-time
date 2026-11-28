@@ -117,7 +117,16 @@ export function StatusBadge({ status }: { status: Match["status"] }) {
   return <Badge variant="outline" className="text-muted-foreground">Scheduled</Badge>;
 }
 
-function pillInk(hex: string) {
+export const LOST_PILL_COLOR = "#64748b";
+
+export function teamPillClass(compact?: boolean) {
+  return cn(
+    "inline-flex min-w-0 shrink items-center justify-center rounded-full font-semibold transition-colors duration-300",
+    compact ? "overflow-hidden px-2 py-1 text-xs leading-tight" : "max-w-full px-4 py-2 text-base",
+  );
+}
+
+export function pillInk(hex: string) {
   const raw = hex.replace("#", "");
   if (!/^[0-9a-fA-F]{6}$/.test(raw)) return "#0f172a";
   const r = parseInt(raw.slice(0, 2), 16);
@@ -160,7 +169,7 @@ function MatchSide({
   }
   const name = teamLabel(team, state);
   const label = score === null ? name : `${name} (${score})`;
-  const background = lost ? "#64748b" : team.color;
+  const background = lost ? LOST_PILL_COLOR : team.color;
   return (
     <button
       type="button"
@@ -169,12 +178,7 @@ function MatchSide({
       aria-current={highlight ? "true" : undefined}
       onClick={() => openTeam(team.id)}
       style={{ backgroundColor: background, color: pillInk(background) }}
-      className={cn(
-        "inline-flex min-w-0 shrink cursor-pointer items-center justify-center rounded-full font-semibold transition-colors duration-300",
-        compact
-          ? "overflow-hidden px-2 py-1 text-xs leading-tight"
-          : "max-w-full px-4 py-2 text-base",
-      )}
+      className={cn(teamPillClass(compact), "cursor-pointer")}
     >
       <span className="min-w-0 truncate">{label}</span>
     </button>

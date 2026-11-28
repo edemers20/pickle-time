@@ -2,7 +2,7 @@
 
 import { Info, Trophy } from "lucide-react";
 import { useState } from "react";
-import { TeamDot } from "@/components/bits";
+import { LOST_PILL_COLOR, pillInk, TeamDot, teamPillClass } from "@/components/bits";
 import { PairCard } from "@/components/pair-card";
 import { useTourney } from "@/components/tourney-provider";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -96,20 +96,37 @@ function HowItWorks({ open, onClose }: { open: boolean; onClose: () => void }) {
 
           <Section title={COPY.groups.heading} testId="how-groups">
             <p className="text-muted-foreground">{fill(COPY.groups.body)}</p>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              {POOLS.map((pool, i) => (
-                <div key={pool} className="flex flex-col items-center gap-1 rounded-xl bg-card px-2 py-3 text-center">
-                  <span className="flex items-center gap-1.5 text-sm font-semibold">
-                    <TeamDot color={GROUP_COLOR[pool]} />
-                    {GROUP_NAME[pool]}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {COPY.groups.courtLabel} {COURTS[i]}
-                  </span>
-                </div>
-              ))}
-            </div>
             <p className="mt-2 text-sm text-muted-foreground">{fill(COPY.groups.rules)}</p>
+            <p className="mt-3 text-sm text-muted-foreground">{fill(COPY.groups.exampleNote)}</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3" data-testid="how-example-pills">
+              {POOLS.map((pool, i) => {
+                const game = COPY.groups.exampleGames[i];
+                return (
+                  <div key={pool} className="flex min-w-0 flex-col items-center gap-2 rounded-xl bg-card px-3 py-3 text-center">
+                    <span className="flex items-center gap-1.5 text-sm font-semibold">
+                      <TeamDot color={GROUP_COLOR[pool]} />
+                      {GROUP_NAME[pool]}
+                      <span className="font-normal text-muted-foreground">
+                        {COPY.groups.courtLabel} {COURTS[i]}
+                      </span>
+                    </span>
+                    {game && (
+                      <div className="flex w-full min-w-0 flex-col items-center gap-1">
+                        <SamplePill {...game.a} />
+                        <span className="text-xs text-muted-foreground">{COPY.groups.vs}</span>
+                        <SamplePill {...game.b} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">{fill(COPY.groups.resultNote)}</p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-2 rounded-xl bg-card px-3 py-3 opacity-80">
+              <SamplePill {...COPY.groups.exampleResult.a} lost={COPY.groups.exampleResult.a.score < COPY.groups.exampleResult.b.score} />
+              <span className="text-xs text-muted-foreground">{COPY.groups.vs}</span>
+              <SamplePill {...COPY.groups.exampleResult.b} lost={COPY.groups.exampleResult.b.score < COPY.groups.exampleResult.a.score} />
+            </div>
           </Section>
 
           <Section title={COPY.seeding.heading} testId="how-seeding">
@@ -173,6 +190,15 @@ function HowItWorks({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SamplePill({ name, color, score, lost }: { name: string; color: string; score?: number; lost?: boolean }) {
+  const background = lost ? LOST_PILL_COLOR : color;
+  return (
+    <span className={teamPillClass(true)} style={{ backgroundColor: background, color: pillInk(background) }}>
+      <span className="min-w-0 truncate">{score === undefined ? name : `${name} (${score})`}</span>
+    </span>
   );
 }
 
